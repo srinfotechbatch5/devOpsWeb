@@ -1,34 +1,22 @@
-pipeline {
-    agent any
+node{
     
-    tools {
-        maven 'local_maven'
+    stage('Clone'){
+        git branch: 'feature/2026.02.13', url: 'https://github.com/srinfotechbatch5/devOpsWeb.git'
     }
-    parameters {
-         string(name: 'staging_server', defaultValue: '13.232.37.20', description: 'Remote Staging Server')
+    
+    stage('Build'){
+        
+        bat 'mvn clean install'
+    
     }
-
-stages{
-        stage('Build'){
-            steps {
-                sh 'mvn clean package'
-            }
-            post {
-                success {
-                    echo 'Archiving the artifacts'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                }
-            }
-        }
-
-        stage ('Deployments'){
-            parallel{
-                stage ("Deploy to Staging"){
-                    steps {
-                        sh "scp -v -o StrictHostKeyChecking=no **/*.war root@${params.staging_server}:/opt/tomcat/webapps/"
-                    }
-                }
-            }
-        }
+    stage('test'){
+        bat 'mvn test'
+    }
+    stage('genearted test results'){
+        
+        junit 'target/surefire-reports/*.xml'
+    }
+    stage('published artifacts'){
+        archiveArtifacts artifacts: 'target/*.war', followSymlinks: false
     }
 }
